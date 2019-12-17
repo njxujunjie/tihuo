@@ -9,7 +9,6 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -18,13 +17,12 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 public class DBUtils {
 
-    private static final String PACK = "com.michael.saas.tenant.domain";
+    //private static final String PACK = "com.michael.saas.tenant.domain";
 
     public static void createDataBase(String url, String name, String user, String pwd){
         Connection conn = null;
