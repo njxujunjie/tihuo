@@ -1,6 +1,9 @@
 package com.michael.saas.tenant.util;
 
+import com.alibaba.druid.pool.DruidDataSource;
+import com.alibaba.druid.pool.DruidDataSourceFactory;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.ResourceUtils;
 
 import javax.persistence.Column;
@@ -23,6 +26,18 @@ import java.util.Set;
 public class DBUtils {
 
     //private static final String PACK = "com.michael.saas.tenant.domain";
+    private static DruidDataSource pool = new DruidDataSource();
+    @Value("${spring.datasource.url}")
+    private static String url;
+
+    @Value("${spring.datasource.username}")
+    private static String username;
+
+    @Value("${spring.datasource.password}")
+    private static String password;
+
+    @Value("${spring.datasource.driver-class-name}")
+    private static String driverClassName;
 
     public static void createDataBase(String url, String name, String user, String pwd){
         Connection conn = null;
@@ -30,9 +45,13 @@ public class DBUtils {
         try {
             url += "?user=" + user + "&password=" + pwd + "&characterEncoding=UTF8";
             Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection(url);
+            //创建连接池
+            pool.setDriverClassName(driverClassName);
+            pool.setUrl(url);
+            pool.setUsername(username);
+            pool.setPassword(password);
+            conn = pool.getConnection();
             stat = conn.createStatement();
-
             String sql = "drop database if exists " + name;
             stat.execute(sql);
 
@@ -49,9 +68,11 @@ public class DBUtils {
             String sqls = list.get(0).toString();
             String[] s = sqls.split(";");
             for (String st : s) {
-                System.out.println(st);
-                stat.execute(st);
+                stat.addBatch(st);
             }
+            //批量执行sql
+            stat.executeBatch();
+            stat.clearBatch();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -66,18 +87,6 @@ public class DBUtils {
                 e.printStackTrace();
             }
         }
-    }
-
-    public static void createTables(String pack,Statement stat) throws Exception{
-
-        Set<Class<?>> domians = DBUtils.getClasss(pack);
-
-        for (Class<?> domian : domians) {
-
-            DBUtils.createTable(domian, stat);
-
-        }
-
     }
 
     public static void createTable(Class<?> clazz, Statement stat) throws Exception{
@@ -222,6 +231,7 @@ public class DBUtils {
                     columnType.append("(".concat(String.valueOf(11)).concat(")"));
                 }
                 break;
+                default:
         }
 
         if(StringUtils.isNotBlank(column.columnDefinition())){
@@ -233,9 +243,6 @@ public class DBUtils {
         return columnType.toString();
     }
 
-    private static Set<Class<?>> getClasss(String pack){
-        return ClassTools.getClasses(pack);
-    }
 
 
     public static void main(String[] args) {
